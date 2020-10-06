@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import Image from 'react-bootstrap/Image'
 import Form from 'react-bootstrap/Form';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
@@ -15,6 +16,7 @@ class App extends Component {
     this.state = {
       isLoading: false,
       formData: {
+        product: '',
         review: ''
       },
       result: ""
@@ -62,20 +64,47 @@ class App extends Component {
     const isLoading = this.state.isLoading;
     const formData = this.state.formData;
     const result = this.state.result;
+    
+    var products = []
+    products.push(<option key = "1" value = "1">Baldur's Gate III</option>);
+    products.push(<option key = "2" value = "2">Spelunk 2</option>);
+    products.push(<option key = "3" value = "3">Crusader Kings III</option>);
 
     return (
       <Container>
-        <div>
-          <h1 className="title">Movie Review Sentiment Analysis</h1>
+        <div className="title">
+          <Row>
+            <Col md={4}>
+              <Image src="https://easy-sparc.github.io/images/entremares/conceito.png" fluid/>
+            </Col>
+            <Col>
+              <h1>The Reviewer</h1>
+              <p>
+                  Sentiment analysis on product reviews using machine learning.
+              </p>
+            </Col>
+          </Row>
         </div>
         <div className="content">
           <Form>
             <Form.Row>
               <Form.Group as={Col}>
-                <Form.Label>Movie Text Review</Form.Label>
                 <Form.Control 
+                  as="select"
+                  value={formData.product}
+                  name="product"
+                  onChange={this.handleChange}>
+                  {products}
+                </Form.Control>
+              </Form.Group>
+            </Form.Row>
+            <Form.Row>
+              <Form.Group as={Col}>
+                <Form.Control
+                  as="textarea"
+                  rows="3"
                   type="text" 
-                  placeholder="Insert the movie review" 
+                  placeholder="Insert the review" 
                   name="review"
                   value={formData.review}
                   onChange={this.handleChange} />
@@ -88,16 +117,7 @@ class App extends Component {
                   variant="success"
                   disabled={isLoading}
                   onClick={!isLoading ? this.handlePredictClick : null}>
-                  { isLoading ? 'Making prediction' : 'Predict' }
-                </Button>
-              </Col>
-              <Col>
-                <Button
-                  block
-                  variant="danger"
-                  disabled={isLoading}
-                  onClick={this.handleCancelClick}>
-                  Reset prediction
+                  { isLoading ? 'Computing...' : 'Send' }
                 </Button>
               </Col>
             </Row>

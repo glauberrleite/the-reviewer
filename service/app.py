@@ -32,8 +32,8 @@ def denoise_text(text):
 flask_app = Flask(__name__)
 app = Api(app = flask_app, 
 		  version = "1.0", 
-		  title = "Movies Sentiment Classifier", 
-		  description = "Predict the sentiment of movies review")
+		  title = "The Reviewer", 
+		  description = "Sentiment analysis on product reviews using machine learning.")
 
 name_space = app.namespace('prediction', description='Prediction APIs')
 
