@@ -8,6 +8,9 @@ WORKDIR /app/service
 COPY requirements.txt /app/service
 RUN pip3 install --upgrade pip -r requirements.txt
 
+RUN python -m nltk.downloader stopwords
+RUN python -m nltk.downloader wordnet
+
 # Add the rest of the code
 COPY . /app/service
 

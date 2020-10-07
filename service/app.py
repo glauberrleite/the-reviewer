@@ -1,33 +1,14 @@
 from flask import Flask, request, jsonify, make_response
 from flask_restplus import Api, Resource, fields
-from sklearn.externals import joblib
-from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import CountVectorizer
+
+import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 import numpy as np
-import re
+import pandas as pd
+import nltk
 
-# Removendo as tags htmls:
-def strip_html(text):
-    soup = BeautifulSoup(text, "html.parser")
-    return soup.get_text()
-
-# Removendo alguns caracteres especiais como colchetes
-def remove_between_square_brackets(text):
-    return re.sub('\[[^]]*\]', '', text)
-
-# Função que remove os caracteres especiais:
-def remove_special_characters(text, remove_digits=True):
-    pattern=r'[^a-zA-z0-9\s]'
-    text=re.sub(pattern,'',text)
-    return text
-
-
-# Função que limpa o texto
-def denoise_text(text):
-    text = strip_html(text)
-    text = remove_between_square_brackets(text)
-    text = remove_special_characters(text)
-    return text
+from preprocess import PreProcess
 
 flask_app = Flask(__name__)
 app = Api(app = flask_app, 
@@ -42,8 +23,8 @@ model = app.model('Prediction params',
 				  							   description="Text containing the review of movies", 
     					  				 	   help="Text review cannot be blank")})
 
-classifier = joblib.load('classifier_movies.joblib')
-vectorizer = joblib.load('count_vectorizer.joblib')
+classifier = joblib.load('recommendation_clf.joblib')
+vectorizer = joblib.load('tfidf_vectorizer.joblib')
 
 
 @name_space.route("/")
@@ -63,14 +44,26 @@ class MainClass(Resource):
 			#print(formData)
 			#print('review:', formData['review'])
 			#data = [val for val in formData.values()]
-			data = [denoise_text(formData['review'])]
-			data =  vectorizer.transform(data)          
-			prediction = classifier.predict(data)
-			label = { 0: "Negative", 1: "Positive"}
+			#data = [clean_text(formData['review'])]
+			data = pd.DataFrame([formData['review']], columns=['Document'])
+			# Cleaning text
+			pre_processor = PreProcess(data, column_name='Document')
+			data = pre_processor.clean_html()
+			data = pre_processor.remove_non_ascii()
+			data = pre_processor.remove_spaces()
+			data = pre_processor.remove_punctuation()
+			data = pre_processor.stemming()
+			data = pre_processor.lemmatization()
+			data = pre_processor.stop_words()
+			
+			# Vectorizing and passing through classifier
+			vec_data = vectorizer.transform(data.Document)
+			prediction = classifier.predict(vec_data)
+			label = { 0: "Not Recommended", 1: "Recommended"}
 			response = jsonify({
 				"statusCode": 200,
 				"status": "Prediction made",
-				"result": "Prediction: " + label[prediction[0]] + " (" + str(np.round(np.max(classifier.predict_proba(data)),2)*100) + "%)"
+				"result": "Prediction: " + label[prediction[0]] + " (" + str(np.round(np.max(classifier.predict_proba(vec_data)),2)*100) + "%)"
 				})
 			response.headers.add('Access-Control-Allow-Origin', '*')
 			return response
