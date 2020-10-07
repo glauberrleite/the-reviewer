@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
 import './App.css';
 import Image from 'react-bootstrap/Image'
+import Card from 'react-bootstrap/Card'
+import CardDeck from 'react-bootstrap/CardDeck'
 import Form from 'react-bootstrap/Form';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Button from 'react-bootstrap/Button';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
+import Tooltip from 'react-bootstrap/Tooltip'
 import 'bootstrap/dist/css/bootstrap.css';
 
 class App extends Component {
@@ -19,7 +23,8 @@ class App extends Component {
         title: '',
         review: ''
       },
-      result: ""
+      result: "",
+      query: []
     };
   }
 
@@ -46,7 +51,7 @@ class App extends Component {
       .then(response => response.json())
       .then(response => {
         this.setState({
-          result: response.result
+          query: response.result
         });
       });
   }
@@ -77,7 +82,7 @@ class App extends Component {
       })
       .then(response => response.json())
       .then(response => {
-        this.setState({
+          this.setState({
           result: response.result,
           isLoading: false
         });
@@ -88,15 +93,44 @@ class App extends Component {
     this.setState({ result: "" });
   }
 
+  render_query(query) {
+    console.log(query);
+    let rows = [];
+
+    for(let i = 0; i < query.length; i++) {
+      let rv = query[i];
+      let bg = ['danger', 'success'];
+
+      rows.push(<Card 
+        bg={bg[rv.recommendation]}
+        text='white'
+        style={{ width: '18rem' }}
+        key={i}
+        className="mb-2"
+        >
+          <Card.Header>
+            {rv.recommendation === 1 ? (<OverlayTrigger key="top-rec" placement="top" overlay={<Tooltip id={'tooltip-top'}><strong>Recommended</strong></Tooltip>}><i className="fas fa-thumbs-up"></i></OverlayTrigger>) : (<OverlayTrigger key="top-rec" placement="top" overlay={<Tooltip id={'tooltip-top'}><strong>Not Recommended</strong></Tooltip>}><i className="fas fa-thumbs-down"></i></OverlayTrigger>)}
+            &nbsp;&nbsp;{rv.funny === 1 ? (<OverlayTrigger key="top-funny" placement="top" overlay={<Tooltip id={'tooltip-top'}><strong>Funny</strong></Tooltip>}><i className="fas fa-grin-tears"></i></OverlayTrigger>) : ""}
+            &nbsp;&nbsp;{rv.helpful === 1 ? (<OverlayTrigger key="top-helpful" placement="top" overlay={<Tooltip id={'tooltip-top'}><strong>Helpful</strong></Tooltip>}><i className="fas fa-info"></i></OverlayTrigger>) : ""}</Card.Header>
+          <Card.Body>
+            <Card.Text>{rv.review}</Card.Text>
+          </Card.Body>
+        </Card>);
+      
+    }
+    return rows;
+  }
+
   render() {
     const isLoading = this.state.isLoading;
     const formData = this.state.formData;
     const result = this.state.result;
+    const query = this.state.query;
     
     var products = []
-    products.push(<option key = "1" value = "1">Baldur's Gate III</option>);
-    products.push(<option key = "2" value = "2">Spelunk 2</option>);
-    products.push(<option key = "3" value = "3">Crusader Kings III</option>);
+    products.push(<option key = "1" value = "Baldur's Gate III">Baldur's Gate III</option>);
+    products.push(<option key = "2" value = "Spelunk 2">Spelunk 2</option>);
+    products.push(<option key = "3" value = "Crusader Kings III">Crusader Kings III</option>);
 
     return (
       <Container>
@@ -157,6 +191,14 @@ class App extends Component {
               </Col>
             </Row>)
           }
+        </div>
+        <div className="content">
+          <CardDeck>
+          {query.length === 0 ? 
+            (<Card body>There are no reviews for this game.</Card>) :
+            this.render_query(query)
+          }
+          </CardDeck>
         </div>
       </Container>
     );
