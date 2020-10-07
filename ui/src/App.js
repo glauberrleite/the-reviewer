@@ -80,7 +80,7 @@ class App extends Component {
             <Col>
               <h1>The Reviewer</h1>
               <p>
-                  Sentiment analysis on game reviews using machine learning.
+                  Game reviews where recomendation and helpfulness are automatically extracted using only the text.
               </p>
             </Col>
           </Row>

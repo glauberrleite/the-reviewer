@@ -14,17 +14,21 @@ flask_app = Flask(__name__)
 app = Api(app = flask_app, 
 		  version = "1.0", 
 		  title = "The Reviewer", 
-		  description = "Sentiment analysis on product reviews using machine learning.")
+		  description = "Information extraction on game reviews using machine learning.")
 
 name_space = app.namespace('prediction', description='Prediction APIs')
 
 model = app.model('Prediction params', 
 				  {'review': fields.String(required = True, 
-				  							   description="Text containing the review of movies", 
+				  							   description="Text containing the review", 
     					  				 	   help="Text review cannot be blank")})
 
 classifier = joblib.load('recommendation_clf.joblib')
 vectorizer = joblib.load('tfidf_vectorizer.joblib')
+#classifier_funny = joblib.load('funny_clf.joblib')
+#vectorizer_funny = joblib.load('tfidf_vectorizer_funny.joblib')
+classifier_helpful = joblib.load('helpful_clf.joblib')
+vectorizer_helpful = joblib.load('tfidf_vectorizer_helpful.joblib')
 
 
 @name_space.route("/")
@@ -59,11 +63,16 @@ class MainClass(Resource):
 			# Vectorizing and passing through classifier
 			vec_data = vectorizer.transform(data.Document)
 			prediction = classifier.predict(vec_data)
+
+			vec_data_helpful = vectorizer_helpful.transform(data.Document)
+			prediction_helpful = classifier_helpful.predict(vec_data_helpful)
+
 			label = { 0: "Not Recommended", 1: "Recommended"}
+			label_helpful = { 0: "Not so helpful", 1: "Helpful"}
 			response = jsonify({
 				"statusCode": 200,
 				"status": "Prediction made",
-				"result": "Prediction: " + label[prediction[0]] + " (" + str(np.round(np.max(classifier.predict_proba(vec_data)),2)*100) + "%)"
+				"result": "Recommendation: " + label[prediction[0]] + " (" + str(np.round(np.max(classifier.predict_proba(vec_data)),2)*100) + "%)" + ";Helpful: " + label_helpful[prediction_helpful[0]] + " (" + str(np.round(np.max(classifier_helpful.predict_proba(vec_data_helpful)),2)*100) + "%)"
 				})
 			response.headers.add('Access-Control-Allow-Origin', '*')
 			return response
