@@ -16,11 +16,39 @@ class App extends Component {
     this.state = {
       isLoading: false,
       formData: {
-        product: '',
+        title: '',
         review: ''
       },
       result: ""
     };
+  }
+
+  handleGameChange = (event) => {
+    const value = event.target.value;
+    const name = event.target.name;
+    var formData = this.state.formData;
+    formData[name] = value;
+    this.setState({
+      formData
+    });
+
+    fetch('http://localhost:5000/query/', 
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+        method: 'POST',
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(response => {
+        this.setState({
+          result: response.result
+        });
+      });
   }
 
   handleChange = (event) => {
@@ -91,9 +119,9 @@ class App extends Component {
               <Form.Group as={Col}>
                 <Form.Control 
                   as="select"
-                  value={formData.product}
-                  name="product"
-                  onChange={this.handleChange}>
+                  value={formData.title}
+                  name="title"
+                  onChange={this.handleGameChange}>
                   {products}
                 </Form.Control>
               </Form.Group>

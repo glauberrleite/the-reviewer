@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 from flask_restplus import Api, Resource, fields
 
 import joblib
@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import pandas as pd
 import nltk
+import json
 
 from preprocess import PreProcess
 
@@ -23,12 +24,20 @@ model = app.model('Prediction params',
 				  							   description="Text containing the review", 
     					  				 	   help="Text review cannot be blank")})
 
+name_space_query = app.namespace('query', description='Query APIs')
+model_query = app.model('Query params', 
+				  {'title': fields.String(required = True, 
+				  							   description="Game title", 
+    					  				 	   help="Title cannot be blank")})								
+
 classifier = joblib.load('recommendation_clf.joblib')
 vectorizer = joblib.load('tfidf_vectorizer.joblib')
 classifier_helpful = joblib.load('helpful_clf.joblib')
 vectorizer_helpful = joblib.load('tfidf_vectorizer_helpful.joblib')
 classifier_funny = joblib.load('funny_clf.joblib')
 vectorizer_funny = joblib.load('tfidf_vectorizer_funny.joblib')
+
+reviews = pd.read_csv('reviews.csv')
 
 
 @name_space.route("/")
@@ -84,5 +93,38 @@ class MainClass(Resource):
 			return jsonify({
 				"statusCode": 500,
 				"status": "Could not make prediction",
+				"error": str(error)
+			})
+
+@name_space_query.route("/")
+class MainClass(Resource):
+
+	def options(self):
+		response = make_response()
+		response.headers.add("Access-Control-Allow-Origin", "*")
+		response.headers.add('Access-Control-Allow-Headers', "*")
+		response.headers.add('Access-Control-Allow-Methods', "*")
+		return response
+
+	@app.expect(model_query)		
+	def post(self):
+		try: 
+			formData = request.json
+			data = reviews[reviews['title']==formData['title']]
+			
+			response = '{"statusCode": 200, "status": "Query made", "result": ' + data.to_json(orient='records') + '}'
+			#response = jsonify({
+			#	"statusCode": 200,
+			#	"status": "Query made",
+			#	"result": [data.to_json(orient='records')]
+			#	})
+			response = Response(json.dumps(json.loads(response)), mimetype='application/json')
+					
+			response.headers.add('Access-Control-Allow-Origin', '*')
+			return response
+		except Exception as error:
+			return jsonify({
+				"statusCode": 500,
+				"status": "Could not make query",
 				"error": str(error)
 			})
