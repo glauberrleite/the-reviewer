@@ -25,10 +25,10 @@ model = app.model('Prediction params',
 
 classifier = joblib.load('recommendation_clf.joblib')
 vectorizer = joblib.load('tfidf_vectorizer.joblib')
-#classifier_funny = joblib.load('funny_clf.joblib')
-#vectorizer_funny = joblib.load('tfidf_vectorizer_funny.joblib')
 classifier_helpful = joblib.load('helpful_clf.joblib')
 vectorizer_helpful = joblib.load('tfidf_vectorizer_helpful.joblib')
+classifier_funny = joblib.load('funny_clf.joblib')
+vectorizer_funny = joblib.load('tfidf_vectorizer_funny.joblib')
 
 
 @name_space.route("/")
@@ -66,13 +66,17 @@ class MainClass(Resource):
 
 			vec_data_helpful = vectorizer_helpful.transform(data.Document)
 			prediction_helpful = classifier_helpful.predict(vec_data_helpful)
+			
+			vec_data_funny = vectorizer_funny.transform(data.Document)
+			prediction_funny = classifier_funny.predict(vec_data_funny)
 
 			label = { 0: "Not Recommended", 1: "Recommended"}
 			label_helpful = { 0: "Not so helpful", 1: "Helpful"}
+			label_funny = { 0: "Not so funny", 1: "Funny"}
 			response = jsonify({
 				"statusCode": 200,
 				"status": "Prediction made",
-				"result": "Recommendation: " + label[prediction[0]] + " (" + str(np.round(np.max(classifier.predict_proba(vec_data)),2)*100) + "%)" + ";Helpful: " + label_helpful[prediction_helpful[0]] + " (" + str(np.round(np.max(classifier_helpful.predict_proba(vec_data_helpful)),2)*100) + "%)"
+				"result": label[prediction[0]] + " - " + str(np.round(np.max(classifier.predict_proba(vec_data)),2)*100) + "% " + "; " + label_helpful[prediction_helpful[0]] + " - " + str(np.round(np.max(classifier_helpful.predict_proba(vec_data_helpful)),2)*100) + "%" + "; " + label_funny[prediction_funny[0]] + " - " + str(np.round(np.max(classifier_funny.predict_proba(vec_data_funny)),2)*100) + "%"
 				})
 			response.headers.add('Access-Control-Allow-Origin', '*')
 			return response
